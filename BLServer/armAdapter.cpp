@@ -1,133 +1,88 @@
 #include "Arduino.h"
 #include <map>
+#include "settings.h"
+#include "armAdapter.h"
+
+armAdapter::armAdapter(uint8_t arm_rot_pin, uint8_t tilt_pin, uint8_t claw_pin, uint8_t lift_pin, uint8_t pos_dir_pin, uint8_t neg_pos_pin) {
+  //action pin mapping
+  action_pin.insert(std::pair<char, uint8_t>(ARM_ROTATION, arm_rot_pin));
+  action_pin.insert(std::pair<char, uint8_t>(TILTING, tilt_pin));
+  action_pin.insert(std::pair<char, uint8_t>(CLAW_ACT, claw_pin));
+  action_pin.insert(std::pair<char, uint8_t>(LIFT, lift_pin));
+  action_pin.insert(std::pair<char, uint8_t>(POSITIVE_DIR, pos_dir_pin));
+  action_pin.insert(std::pair<char, uint8_t>(NEGATIVE_DIR, neg_pos_pin));
+
+  //setting pins on LOW
+  for (std::map<char, uint8_t>::iterator pos = action_pin.begin(); pos != action_pin.end(); pos++) {
+    digitalWrite(pos->second, LOW);
+  }  
+}
 
 
-//COMMANDS CONSTANTS
-#define ARM_ROTATION 'S'
-#define TILTING 'T'
-#define CLAW_ACT 'C'
-#define LIFT 'B'
-
-//DIRECTION CONSTANTS
-//R -> right or forward 
-//L -> left or backward
-#define POSITIVE_DIR 'R'
-#define NEGATIVE_DIR 'L'
-
-class armAdapter {
-  
-  //declaring variables
-  private: 
-    //mapping 
-    //act_char-> pin
-    std::map<char, uint8_t> action_pin;
-
-    //act_char -> status
-    std::map<char, bool> action_status = {
-      {ARM_ROTATION, false},
-      {TILTING, false},
-      {CLAW_ACT, false},
-      {LIFT, false},
-      {POSITIVE_DIR, false},
-      {NEGATIVE_DIR, false}
-    };
-
-  public:
-  
-    //CONSTRUCTOR
-    armAdapter(uint8_t arm_rot_pin, uint8_t tilt_pin, uint8_t claw_pin, uint8_t lift_pin, uint8_t pos_dir_pin, uint8_t neg_pos_pin) {
-      
-      //action pin mapping
-      action_pin.insert(std::pair<char, uint8_t>(ARM_ROTATION, arm_rot_pin));
-      action_pin.insert(std::pair<char, uint8_t>(TILTING, tilt_pin));
-      action_pin.insert(std::pair<char, uint8_t>(CLAW_ACT, claw_pin));
-      action_pin.insert(std::pair<char, uint8_t>(LIFT, lift_pin));
-      action_pin.insert(std::pair<char, uint8_t>(POSITIVE_DIR, pos_dir_pin));
-      action_pin.insert(std::pair<char, uint8_t>(NEGATIVE_DIR, neg_pos_pin));
-
-      //setting pins on LOW
-      for (std::map<char, uint8_t>::iterator pos = action_pin.begin(); pos != action_pin.end(); pos++) {
-        digitalWrite(pos->second, LOW);
-      }
-      
-    }
-
-
-  //private methods
-  private:
-  
-    //STOP ALL
-    void stopArm() {
-      //first stop actions
-      digitalWrite(action_pin.find(ARM_ROTATION)->second, LOW);
-      digitalWrite(action_pin.find(TILTING)->second, LOW);
-      digitalWrite(action_pin.find(CLAW_ACT)->second, LOW);
-      digitalWrite(action_pin.find(LIFT)->second, LOW);
-      //now dirs
-      digitalWrite(action_pin.find(POSITIVE_DIR)->second, LOW);
-      digitalWrite(action_pin.find(NEGATIVE_DIR)->second, LOW);
-      //update status
-      for (std::map<char, bool>::iterator pos = action_status.begin(); pos != action_status.end(); pos++) {
-        pos->second = false;
-      }
-    }
-
-
-  //COMMANDS ALREADY CHECKED -> EXECUTE
-  //NOTE: same command will switch status: if R->0 and you send R then R->1, but sending again R will result in R->0 (stopping accelerating)
-  void executeArmAction(char com_id) {
-    
-    std::map<char, bool>::iterator iter = action_status.find(com_id);
-    bool value = iter->second;
-    
-    switch (com_id) {
-      
-      case ARM_ROTATION:
-        digitalWrite(action_pin.find(ARM_ROTATION)->second, !value );
-        iter->second = !value;
-        break;
-      
-      case TILTING:
-        digitalWrite(action_pin.find(TILTING)->second, !value);
-        iter->second = !value;
-        break;
-
-      case CLAW_ACT:
-        digitalWrite(action_pin.find(CLAW_ACT)->second, !value );
-        iter->second = !value;
-        break;
-      
-      case LIFT:
-        digitalWrite(action_pin.find(LIFT)->second, !value);
-        iter->second = !value;
-        break;
-
-      case POSITIVE_DIR:
-        if (action_status.find(NEGATIVE_DIR)->second == false) { //preventing contrasting directions
-          digitalWrite(action_pin.find(POSITIVE_DIR)->second, !value);
-          iter->second = !value;
-        }
-        break;
-
-      case NEGATIVE_DIR:
-        if (action_status.find(POSITIVE_DIR)->second == false) { //preventing contrasting directions
-          digitalWrite(action_pin.find(NEGATIVE_DIR)->second, !value);
-          iter->second = !value;
-        }
-        break;
-        
-    }
+void armAdapter::stopArm() {
+  //first stop actions
+  digitalWrite(action_pin.find(ARM_ROTATION)->second, LOW);
+  digitalWrite(action_pin.find(TILTING)->second, LOW);
+  digitalWrite(action_pin.find(CLAW_ACT)->second, LOW);
+  digitalWrite(action_pin.find(LIFT)->second, LOW);
+  //now dirs
+  digitalWrite(action_pin.find(POSITIVE_DIR)->second, LOW);
+  digitalWrite(action_pin.find(NEGATIVE_DIR)->second, LOW);
+  //update status
+  for (std::map<char, bool>::iterator pos = action_status.begin(); pos != action_status.end(); pos++) {
+    pos->second = false;
   }
+}
 
-  //public method to communicate
-  public:
+void armAdapter::executeArmAction(char com_id) {
+  
+  std::map<char, bool>::iterator iter = action_status.find(com_id);
+  bool value = iter->second;
+  
+  switch (com_id) {
+    
+    case ARM_ROTATION:
+      digitalWrite(action_pin.find(ARM_ROTATION)->second, !value );
+      iter->second = !value;
+      break;
+    
+    case TILTING:
+      digitalWrite(action_pin.find(TILTING)->second, !value);
+      iter->second = !value;
+      break;
 
-    void handleArmCom(char instruction) {
+    case CLAW_ACT:
+      digitalWrite(action_pin.find(CLAW_ACT)->second, !value );
+      iter->second = !value;
+      break;
+    
+    case LIFT:
+      digitalWrite(action_pin.find(LIFT)->second, !value);
+      iter->second = !value;
+      break;
 
-      if ( ( (instruction == ARM_ROTATION) or (instruction == TILTING) ) or (instruction == CLAW_ACT) or (instruction == LIFT) or (instruction == POSITIVE_DIR) or (instruction == NEGATIVE_DIR)) {
-        executeArmAction(instruction);
+    case POSITIVE_DIR:
+      if (action_status.find(NEGATIVE_DIR)->second == false) { //preventing contrasting directions
+        digitalWrite(action_pin.find(POSITIVE_DIR)->second, !value);
+        iter->second = !value;
       }
-      
-    }
+      break;
 
-};
+    case NEGATIVE_DIR:
+      if (action_status.find(POSITIVE_DIR)->second == false) { //preventing contrasting directions
+        digitalWrite(action_pin.find(NEGATIVE_DIR)->second, !value);
+        iter->second = !value;
+      }
+      break;
+      
+  }
+}
+
+
+void armAdapter::adaptArmCom(char instruction) {
+
+  if ( ( (instruction == ARM_ROTATION) or (instruction == TILTING) ) or (instruction == CLAW_ACT) or (instruction == LIFT) or (instruction == POSITIVE_DIR) or (instruction == NEGATIVE_DIR)) {
+    executeArmAction(instruction);
+  }
+  
+}

@@ -1,37 +1,6 @@
 #include "BluetoothSerial.h"
-/*#include "carAdapter.cpp"
-#include "armAdapter.cpp"*/
-#include "settingsHandler.cpp"
-
-//END OF COMMS
-#define EOC '\n'
-
-//DEFINING OUTPUT PINS
-//ACTION pins
-//car pins
-#define ACCELERATION_PIN 14
-#define STEERING_PIN 12
-//arm pins
-#define ARM_ROTATION_PIN 13
-#define TILTING_PIN 15
-#define CLAW_ACT_PIN 16
-#define LIFT_PIN 17
-//DIRECTION pins
-//car pins
-#define POSITIVE_DIR_CAR_PIN 32
-#define NEGATIVE_DIR_CAR_PIN 33
-//arm pins
-#define POSITIVE_DIR_ARM_PIN 23
-#define NEGATIVE_DIR_ARM_PIN 22
-//VELOCIY pins
-//car vel pins
-#define CAR_VEL1 25
-#define CAR_VEL2 26
-#define CAR_VEL3 27
-//arm vel pins
-#define ARM_VEL1 21
-#define ARM_VEL2 19
-#define ARM_VEL3 18
+#include "commsHandler.h"
+#include "settings.h"
 
 //declaring variables for message elaboration
 BluetoothSerial SerialBT;
@@ -42,10 +11,7 @@ char inbound;
 char command[9];
 uint8_t msgpos = 0;
 
-//instatiating handlers and adapters
-carAdapter car_adapter(ACCELERATION_PIN, STEERING_PIN, POSITIVE_DIR_CAR_PIN, NEGATIVE_DIR_CAR_PIN);
-armAdapter arm_adapter(ARM_ROTATION_PIN, TILTING_PIN, CLAW_ACT_PIN, LIFT_PIN, POSITIVE_DIR_ARM_PIN, NEGATIVE_DIR_ARM_PIN);
-
+commsHandler comms_handler(CAR, VEL2);
 
 void setup() {
   
@@ -53,9 +19,9 @@ void setup() {
   pinMode(STEERING_PIN, OUTPUT);
   pinMode(POSITIVE_DIR_CAR_PIN, OUTPUT);
   pinMode(NEGATIVE_DIR_CAR_PIN, OUTPUT);
-  pinMode(CAR_VEL1, OUTPUT);
-  pinMode(CAR_VEL2, OUTPUT);
-  pinMode(CAR_VEL3, OUTPUT);
+  pinMode(CAR_VEL1_PIN, OUTPUT);
+  pinMode(CAR_VEL2_PIN, OUTPUT);
+  pinMode(CAR_VEL3_PIN, OUTPUT);
 
   pinMode(ARM_ROTATION_PIN, OUTPUT);
   pinMode(TILTING_PIN, OUTPUT);
@@ -63,9 +29,9 @@ void setup() {
   pinMode(LIFT_PIN, OUTPUT);
   pinMode(POSITIVE_DIR_ARM_PIN, OUTPUT);
   pinMode(NEGATIVE_DIR_ARM_PIN, OUTPUT);
-  pinMode(ARM_VEL1, OUTPUT);
-  pinMode(ARM_VEL2, OUTPUT);
-  pinMode(ARM_VEL3, OUTPUT);
+  pinMode(ARM_VEL1_PIN, OUTPUT);
+  pinMode(ARM_VEL2_PIN, OUTPUT);
+  pinMode(ARM_VEL3_PIN, OUTPUT);
   
   Serial.begin(115200);
   SerialBT.begin("ESP32-COMMANDS-RECEIVER"); //Bluetooth device name
@@ -94,8 +60,7 @@ void loop() {
         if (disc) {handshake_complete = false; Serial.write("Disconnected"); } //device disconnected
         
         else { //INBOUND COMMAND TO ELABORATE
-          car_adapter.handleCarCom(command[0]);
-          arm_adapter.handleArmCom(command[0]);
+          comms_handler.handleComm(command);
         }
         
       }
