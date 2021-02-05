@@ -18,7 +18,7 @@ class carAdapter {
   private: 
     //mapping 
     //act_char-> pin
-    std::map<char, int> action_pin;
+    std::map<char, uint8_t> action_pin;
 
     //act_char -> status
     std::map<char, bool> action_status = {
@@ -31,16 +31,16 @@ class carAdapter {
   public:
   
     //CONSTRUCTOR
-    carAdapter(int acc_pin, int steer_pin, int pos_dir_pin, int neg_pos_pin) {
+    carAdapter(uint8_t acc_pin, uint8_t steer_pin, uint8_t pos_dir_pin, uint8_t neg_pos_pin) {
       
       //action pin mapping
-      action_pin.insert(std::pair<char, int>(ACCELERATION, acc_pin));
-      action_pin.insert(std::pair<char, int>(STEERING, steer_pin));
-      action_pin.insert(std::pair<char, int>(POSITIVE_DIR, pos_dir_pin));
-      action_pin.insert(std::pair<char, int>(NEGATIVE_DIR, neg_pos_pin));
+      action_pin.insert(std::pair<char, uint8_t>(ACCELERATION, acc_pin));
+      action_pin.insert(std::pair<char, uint8_t>(STEERING, steer_pin));
+      action_pin.insert(std::pair<char, uint8_t>(POSITIVE_DIR, pos_dir_pin));
+      action_pin.insert(std::pair<char, uint8_t>(NEGATIVE_DIR, neg_pos_pin));
 
       //setting pins on LOW
-      for (std::map<char, int>::iterator pos = action_pin.begin(); pos != action_pin.end(); pos++) {
+      for (std::map<char, uint8_t>::iterator pos = action_pin.begin(); pos != action_pin.end(); pos++) {
         digitalWrite(pos->second, LOW);
       }
       
@@ -57,6 +57,10 @@ class carAdapter {
         //now dirs
         digitalWrite(action_pin.find(POSITIVE_DIR)->second, LOW);
         digitalWrite(action_pin.find(NEGATIVE_DIR)->second, LOW);
+        //update status
+        for (std::map<char, bool>::iterator pos = action_status.begin(); pos != action_status.end(); pos++) {
+          pos->second = false;
+        }
       }
 
       //COMMANDS ALREADY CHECKED -> EXECUTE
@@ -70,9 +74,6 @@ class carAdapter {
           
           case ACCELERATION:
             digitalWrite(action_pin.find(ACCELERATION)->second, !value );
-            Serial.print(value);
-            if (!value ) Serial.print("acc");
-            else Serial.print("stop");
             iter->second = !value;
             break;
           
