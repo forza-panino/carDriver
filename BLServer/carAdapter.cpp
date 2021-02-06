@@ -3,16 +3,16 @@
 #include "settings.h"
 #include "carAdapter.h"
 
-carAdapter::carAdapter(uint8_t acc_pin, uint8_t steer_pin, uint8_t pos_dir_pin, uint8_t neg_pos_pin) {
+carAdapter::carAdapter(uint8_t acc_r_pin, uint8_t acc_l_pin, uint8_t steer_r_pin, uint8_t steer_l_pin) {
       
   //action pin mapping
-  action_pin.insert(std::pair<char, uint8_t>(ACCELERATION, acc_pin));
-  action_pin.insert(std::pair<char, uint8_t>(STEERING, steer_pin));
-  action_pin.insert(std::pair<char, uint8_t>(POSITIVE_DIR, pos_dir_pin));
-  action_pin.insert(std::pair<char, uint8_t>(NEGATIVE_DIR, neg_pos_pin));
+  action_pin.insert(std::pair<uint8_t, uint8_t>(ACCELERATION_R, acc_r_pin));
+  action_pin.insert(std::pair<uint8_t, uint8_t>(ACCELERATION_L, acc_l_pin));
+  action_pin.insert(std::pair<uint8_t, uint8_t>(STEERING_R, steer_r_pin));
+  action_pin.insert(std::pair<uint8_t, uint8_t>(STEERING_L, steer_l_pin));
 
   //setting pins on LOW
-  for (std::map<char, uint8_t>::iterator pos = action_pin.begin(); pos != action_pin.end(); pos++) {
+  for (std::map<uint8_t, uint8_t>::iterator pos = action_pin.begin(); pos != action_pin.end(); pos++) {
     digitalWrite(pos->second, LOW);
   }
   
@@ -21,48 +21,51 @@ carAdapter::carAdapter(uint8_t acc_pin, uint8_t steer_pin, uint8_t pos_dir_pin, 
 
 
 void carAdapter::stopCar() {
-  //first stop actions
-  digitalWrite(action_pin.find(ACCELERATION)->second, LOW);
-  digitalWrite(action_pin.find(STEERING)->second, LOW);
-  //now dirs
-  digitalWrite(action_pin.find(POSITIVE_DIR)->second, LOW);
-  digitalWrite(action_pin.find(NEGATIVE_DIR)->second, LOW);
+  
+  digitalWrite(action_pin.find(ACCELERATION_R)->second, LOW);
+  digitalWrite(action_pin.find(ACCELERATION_L)->second, LOW);
+  digitalWrite(action_pin.find(STEERING_R)->second, LOW);
+  digitalWrite(action_pin.find(STEERING_L)->second, LOW);
   //update status
-  for (std::map<char, bool>::iterator pos = action_status.begin(); pos != action_status.end(); pos++) {
+  for (std::map<uint8_t, bool>::iterator pos = action_status.begin(); pos != action_status.end(); pos++) {
     pos->second = false;
   }
 }
 
 
 
-void carAdapter::executeCarAction(char com_id) {
+void carAdapter::executeCarAction(uint8_t com_id) {
         
-  std::map<char, bool>::iterator iter = action_status.find(com_id);
+  std::map<uint8_t, bool>::iterator iter = action_status.find(com_id);
   bool value = iter->second;
   
   switch (com_id) {
     
-    case ACCELERATION:
-      digitalWrite(action_pin.find(ACCELERATION)->second, !value );
-      iter->second = !value;
+    case ACCELERATION_R:
+      if (action_status.find(ACCELERATION_L)->second == false) { //preventing contrasting directions
+        digitalWrite(action_pin.find(ACCELERATION_R)->second, !value );
+        iter->second = !value; //updating status
+      }
       break;
     
-    case STEERING:
-      digitalWrite(action_pin.find(STEERING)->second, !value);
-      iter->second = !value;
-      break;
-
-    case POSITIVE_DIR:
-      if (action_status.find(NEGATIVE_DIR)->second == false) { //preventing contrasting directions
-        digitalWrite(action_pin.find(POSITIVE_DIR)->second, !value);
-        iter->second = !value;
+    case ACCELERATION_L:
+      if (action_status.find(ACCELERATION_R)->second == false) {
+        digitalWrite(action_pin.find(ACCELERATION_L)->second, !value);
+        iter->second = !value; //updating status
       }
       break;
 
-    case NEGATIVE_DIR:
-      if (action_status.find(POSITIVE_DIR)->second == false) { //preventing contrasting directions
-        digitalWrite(action_pin.find(NEGATIVE_DIR)->second, !value);
-        iter->second = !value;
+    case STEERING_R:
+      if (action_status.find(STEERING_L)->second == false) { //preventing contrasting directions
+        digitalWrite(action_pin.find(STEERING_R)->second, !value);
+        iter->second = !value; //updating status
+      }
+      break;
+
+    case STEERING_L:
+      if (action_status.find(STEERING_R)->second == false) { //preventing contrasting directions
+        digitalWrite(action_pin.find(STEERING_L)->second, !value);
+        iter->second = !value; //updating status
       }
       break;
       
@@ -71,10 +74,41 @@ void carAdapter::executeCarAction(char com_id) {
 
 
 
-void carAdapter::adaptCarCom(char instruction) {
+void carAdapter::adaptCarCom(char instruction[]) {
 
-  if ( ( (instruction == ACCELERATION) or (instruction == STEERING) ) or (instruction == POSITIVE_DIR) or (instruction == NEGATIVE_DIR) ) {
-    executeCarAction(instruction);
+  switch (instruction[0]) {
+
+    case ACCELERATION:
+    
+      switch (instruction[1]) {
+
+        case POSITIVE_DIR:
+          executeCarAction(ACCELERATION_R);
+          break;
+        case NEGATIVE_DIR:
+          executeCarAction(ACCELERATION_L);
+          break;
+          
+      }
+
+      break;
+
+
+   case STEERING:
+
+     switch (instruction[1]) {
+      
+        case POSITIVE_DIR:
+          executeCarAction(STEERING_R);
+          break;
+        case NEGATIVE_DIR:
+          executeCarAction(STEERING_L);
+          break;
+          
+     }
+
+     break;
+
   }
   
 }

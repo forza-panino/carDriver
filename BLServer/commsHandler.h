@@ -23,7 +23,7 @@ class commsHandler {
 
     void switchMachine();
     void changeVelocity(char velocity);
-    void sendToAdapter(char command);
+    void sendToAdapter(char command[]);
 
   //public methods
   public:

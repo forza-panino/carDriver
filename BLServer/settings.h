@@ -34,28 +34,27 @@
 //DEFINING OUTPUT PINS
 //ACTION pins
 //car pins
-#define ACCELERATION_PIN 14
-#define STEERING_PIN 12
+#define ACCELERATION_R_PIN 26
+#define ACCELERATION_L_PIN 27
+#define STEERING_R_PIN 14
+#define STEERING_L_PIN 12
 //arm pins
-#define ARM_ROTATION_PIN 13
-#define TILTING_PIN 15
-#define CLAW_ACT_PIN 16
-#define LIFT_PIN 17
-//DIRECTION pins
-//car pins
-#define POSITIVE_DIR_CAR_PIN 32
-#define NEGATIVE_DIR_CAR_PIN 33
-//arm pins
-#define POSITIVE_DIR_ARM_PIN 23
-#define NEGATIVE_DIR_ARM_PIN 22
+#define ARM_ROTATION_R_PIN 13
+#define ARM_ROTATION_L_PIN 15
+#define TILTING_R_PIN 5
+#define TILTING_L_PIN 17
+#define CLAW_ACT_R_PIN 16
+#define CLAW_ACT_L_PIN 4
+#define LIFT_R_PIN 19
+#define LIFT_L_PIN 18
 //VELOCIY pins
 //car vel pins
-#define CAR_VEL1_PIN 25
-#define CAR_VEL2_PIN 26
-#define CAR_VEL3_PIN 27
+#define CAR_VEL1_PIN 32
+#define CAR_VEL2_PIN 33
+#define CAR_VEL3_PIN 25
 //arm vel pins
-#define ARM_VEL1_PIN 21
-#define ARM_VEL2_PIN 19
-#define ARM_VEL3_PIN 18
+#define ARM_VEL1_PIN 23
+#define ARM_VEL2_PIN 22
+#define ARM_VEL3_PIN 21
 
 #endif

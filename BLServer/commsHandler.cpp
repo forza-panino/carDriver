@@ -7,8 +7,8 @@
 commsHandler::commsHandler(char machine, uint8_t velocity) {
   this->machine = machine;
   changeVelocity(velocity);
-  car_adapter = new carAdapter(ACCELERATION_PIN, STEERING_PIN, POSITIVE_DIR_CAR_PIN, NEGATIVE_DIR_CAR_PIN);
-  arm_adapter = new armAdapter(ARM_ROTATION_PIN, TILTING_PIN, CLAW_ACT_PIN, LIFT_PIN, POSITIVE_DIR_ARM_PIN, NEGATIVE_DIR_ARM_PIN);
+  car_adapter = new carAdapter(ACCELERATION_R_PIN, ACCELERATION_L_PIN, STEERING_R_PIN,STEERING_L_PIN);
+  arm_adapter = new armAdapter(ARM_ROTATION_R_PIN, ARM_ROTATION_L_PIN, TILTING_R_PIN, TILTING_L_PIN, CLAW_ACT_R_PIN, CLAW_ACT_L_PIN, LIFT_R_PIN, LIFT_L_PIN);
 }
 
 void commsHandler::switchMachine() {
@@ -131,7 +131,7 @@ void commsHandler::changeVelocity(char velocity){
 
 
 
-void commsHandler::sendToAdapter(char command) {
+void commsHandler::sendToAdapter(char command[]) {
 
   if (machine == CAR){car_adapter->adaptCarCom(command);}
   else {arm_adapter->adaptArmCom(command);}
@@ -150,7 +150,7 @@ void commsHandler::handleComm(char command[]) {
       break;
 
     default:
-      sendToAdapter(command[0]);
+      sendToAdapter(command);
       break;
       
   }
