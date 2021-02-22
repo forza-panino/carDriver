@@ -7,18 +7,24 @@ BTS7960 FR(L_EN_FR, R_EN_FR, L_PWM_FR, R_PWM_FR);
 BTS7960 RL(L_EN_RL, R_EN_RL, L_PWM_RL, R_PWM_RL);
 BTS7960 RR(L_EN_RR, R_EN_RR, L_PWM_RR, R_PWM_RR);
 
+//defining velocity variable
+uint8_t velocity = 130;
+
+//actions status
+bool isAcc_R = false;
+bool isAcc_L = false;
+
+bool shouldStop = true;
+
 
 
 void setup() {
 
   analogReference(EXTERNAL);
 
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW);
-
-  pinMode(VEL1, INPUT);
-  pinMode(VEL2, INPUT);
-  pinMode(VEL3, INPUT);
+  pinMode(VEL1_PIN, INPUT);
+  pinMode(VEL2_PIN, INPUT);
+  pinMode(VEL3_PIN, INPUT);
 
   pinMode(ACCELERATE_R, INPUT);
   pinMode(ACCELERATE_L, INPUT);
@@ -29,42 +35,92 @@ void setup() {
   FR.Enable();
   RL.Enable();
   RR.Enable();
-
-  Serial.begin(115200);
   
 }
 
 void loop() {
 
-  if (analogRead(VEL1) > 800) {
-    Serial.write("VEL1 \n");
+  if (digitalRead(VEL1_PIN)) {
+    velocity = VEL1;
   }
-  if (analogRead(VEL2) > 800) {
-    Serial.write("VEL2 \n");
+  if (digitalRead(VEL2_PIN)) {
+    velocity = VEL2;
   }
-  if (analogRead(VEL3) > 800) {
-    Serial.write("VEL3 \n");
+  if (digitalRead(VEL3_PIN)) {
+    velocity = VEL3;
   }
   
-  if (analogRead(ACCELERATE_R) > 800) {
-    Serial.write("ACCELERATE_R \n");
-    digitalWrite(LED_BUILTIN, HIGH);
-  }
-  if (analogRead(ACCELERATE_L) > 800) {
-    Serial.write("ACCELERATE_L \n");
-    digitalWrite(LED_BUILTIN, HIGH);
-  }
-  if (analogRead(STEER_R) > 800) {
-    Serial.write("STEER_R \n");
-    digitalWrite(LED_BUILTIN, HIGH);
-  }
-  if (analogRead(STEER_L) > 800) {
-    Serial.write("STEER_L \n");
-    digitalWrite(LED_BUILTIN, HIGH);
-  }
+  if (digitalRead(ACCELERATE_R)) {
+    RR.TurnRight(velocity);
+    RL.TurnRight(velocity);
+    FR.TurnRight(velocity);
+    FL.TurnRight(velocity);
+    isAcc_R = true;
+    shouldStop = false;
+  } else { isAcc_R = false; shouldStop = true;}
+  
+  if (digitalRead(ACCELERATE_L)) {
+    RR.TurnLeft(velocity);
+    RL.TurnLeft(velocity);
+    FR.TurnLeft(velocity);
+    FL.TurnLeft(velocity);
+    isAcc_L = true;
+    shouldStop = false;
+  } else { isAcc_L = false; shouldStop = true;}
+  
+  if (digitalRead(STEER_R)) {
+    if (!isAcc_R and !isAcc_L) { //steering on the spot
+      FL.TurnRight(velocity);
+      RR.TurnLeft(velocity);
+      RL.TurnRight(velocity);
+      FR.TurnLeft(velocity);
+    }
+    else { //steering while accelerating
 
-  Serial.write("------------------\n");
-  delay(1000);
-  digitalWrite(LED_BUILTIN, LOW);
+      if (isAcc_R) {
+        FL.TurnRight(VEL3);
+        RR.TurnRight(VEL1);
+        RL.TurnRight(VEL3);
+        FR.TurnRight(VEL1);
+      }
+      else {
+        FL.TurnLeft(VEL3);
+        RR.TurnLeft(VEL1);
+        RL.TurnLeft(VEL3);
+        FR.TurnLeft(VEL1);
+      }
+      
+    }
+    shouldStop = false;
+  } else {shouldStop = true;}
+  
+  if (digitalRead(STEER_L)) {
+    if (!isAcc_R and !isAcc_L) { //steering on the spot
+      FR.TurnRight(velocity);
+      RL.TurnLeft(velocity);
+      RR.TurnRight(velocity);
+      FL.TurnLeft(velocity);
+    }
+    else { //steering while accelerating
+
+      if (isAcc_R) {
+        FR.TurnRight(VEL3);
+        RL.TurnRight(VEL1);
+        RR.TurnRight(VEL3);
+        FL.TurnRight(VEL1);
+      }
+      else {
+        FR.TurnLeft(VEL3);
+        RL.TurnLeft(VEL1);
+        RR.TurnLeft(VEL3);
+        FL.TurnLeft(VEL1);
+      }
+      
+    }
+    shouldStop = false;
+  } else {shouldStop = true;}
+
+  if (shouldStop) { RR.Stop(); RL.Stop(); FR.Stop(); FL.Stop();  }
   
 }
+
